@@ -1351,6 +1351,7 @@ canvas.addEventListener('click',()=>{
 });
 document.addEventListener('pointerlockchange',()=>{
   pointerLocked=(document.pointerLockElement===canvas);
+  if(pointerLocked) guardPitchAfterUi(220);
   $('lockTip').classList.toggle('hidden',pointerLocked||G.state!=='playing');
   if(!pointerLocked && G.state==='playing' && !G.suppressPause && G.modalOpen===0){
     openPause();
@@ -1362,17 +1363,22 @@ document.addEventListener('pointerlockerror',()=>{
   if(lockFails>=3){ G.dragMode=true; $('lockTip').classList.add('hidden'); toast('마우스 왼쪽 버튼을 누른 채 드래그하면 시점이 돌아갑니다.','good'); }
 });
 let dragging=false,downX=0,downY=0,downT=0,movedFar=false;
+let ignorePitchUntil=0;
+function clampPitch(){ P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch)); }
+function clampPitchDelta(v){ return Math.max(-45,Math.min(45,v||0)); }
+function guardPitchAfterUi(ms){ dragging=false; ignorePitchUntil=Math.max(ignorePitchUntil,performance.now()+ms); }
+function resetViewPitch(){ P.pitch=0; guardPitchAfterUi(420); }
 document.addEventListener('mousemove',e=>{
-  if(G.state!=='playing') return;
+  if(G.state!=='playing'||G.modalOpen>0) return;
   if(pointerLocked){
     P.yaw-=e.movementX*0.0026;
-    P.pitch-=e.movementY*0.0026;
+    if(performance.now()>=ignorePitchUntil) P.pitch-=clampPitchDelta(e.movementY)*0.0026;
   }else if(G.dragMode&&dragging){
     P.yaw-=e.movementX*0.005;
-    P.pitch-=e.movementY*0.005;
+    P.pitch-=clampPitchDelta(e.movementY)*0.005;
     if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>6) movedFar=true;
   }
-  P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch));
+  clampPitch();
 });
 document.addEventListener('mousedown',e=>{
   if(G.state!=='playing'||G.modalOpen>0) return;
@@ -1460,7 +1466,7 @@ function initTouch(){
       if(t.identifier===joy.id){ joyMove(t); used=true; }
       else if(t.identifier===lookT.id){
         P.yaw-=(t.clientX-lookT.x)*0.005;
-        P.pitch-=(t.clientY-lookT.y)*0.005;
+        P.pitch-=clampPitchDelta(t.clientY-lookT.y)*0.005;
         P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch));
         lookT.x=t.clientX; lookT.y=t.clientY;
         used=true;
@@ -1645,8 +1651,8 @@ function teleport(x,y,z,toDragon){
   setTimeout(()=>{
     P.pos.set(x,y,z); P.vel.set(0,0,0);
     G.inDragon=toDragon;
-    if(toDragon){ P.yaw=0; toast('분수 드래곤의 방에 들어왔습니다! 네 개의 수정을 깨뜨리세요! 🐉','star'); }
-    else toast('포털 유적으로 돌아왔습니다.','good');
+    if(toDragon){ P.yaw=0; resetViewPitch(); toast('분수 드래곤의 방에 들어왔습니다! 네 개의 수정을 깨뜨리세요! 🐉','star'); }
+    else { resetViewPitch(); toast('포털 유적으로 돌아왔습니다.','good'); }
     updateObjective();
     f.style.opacity=0; f.style.pointerEvents='none';
   },650);
@@ -1893,11 +1899,13 @@ function buildComplete(dev){
 function openModalCommon(){
   G.modalOpen++;
   G.suppressPause=true;
+  dragging=false;
   if(document.pointerLockElement) document.exitPointerLock();
 }
 function closeModalCommon(){ G.modalOpen=Math.max(0,G.modalOpen-1); }
 function relock(){
   G.suppressPause=false;
+  guardPitchAfterUi(300);
   if(G.state==='playing'&&!G.dragMode&&!G.touchMode){
     try{ canvas.requestPointerLock(); }catch(e){}
   }
@@ -1950,6 +1958,7 @@ function closeExplain(next){
   const dev=devices[+$('exModal').dataset.dev];
   $('exModal').classList.add('hidden');
   closeModalCommon();
+  resetViewPitch();
   finalizeSuccess(dev);
   if(next){
     updateObjective();
