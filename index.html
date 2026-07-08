@@ -800,7 +800,7 @@ const PROBLEMS={
    opts:['분모를 6으로 통분한 뒤 분자끼리 뺍니다.','분모끼리 빼서 4/4로 계산합니다.','5에서 1만 빼고 분모는 6으로 둡니다.','뺄셈에서는 통분하지 않아도 됩니다.'],
    h1:'1/2을 분모 6인 분수로 바꾸세요.',h2:'1/2은 3/6입니다.',
    why:'5/6 - 3/6 = 2/6 = 1/3입니다.',
-   fxMsg:'첫 번째 포털 돌 점화',frag:'식',cand:['1/3','4/4','2/6','1/6']},
+   fxMsg:'첫 번째 포털 돌 점화',frag:'식',cand:['1/3','4/4','2/3','1/6']},
  17:{scene:'포털 유적',dev:'포털 돌 2',type:'진분수의 뺄셈',clue:'5/8 - 3/10 = □',ans:'13/40',
    rule:'8과 10의 최소공배수 40으로 통분합니다.',
    opts:['8과 10의 최소공배수 40으로 통분합니다.','분모끼리 빼서 2/18로 계산합니다.','5와 3만 빼서 2/8로 계산합니다.','작은 분수 3/10을 버리고 5/8만 남깁니다.'],
@@ -934,7 +934,7 @@ function genWorld(){
   // 바구니 번호(문제4)
   clueRow(['1/8','+','7/10','='],5,1,-22,1,0);
   setGen(10,1,-22,B.CHEST);
-  addSlotDevice({pid:4,slot:{x:8,y:1,z:-22},anchor:new THREE.Vector3(7,1,-22),
+  addSlotDevice({pid:4,slot:{x:9,y:1,z:-22},anchor:new THREE.Vector3(8,1,-22),
     fx(){ toast('창고 상자가 열렸습니다!','good'); G.hintOre++; updateHUD(); toast('상자에서 힌트 광석 1개를 찾았습니다! 💎','star'); }});
 
   // ---- 4. 농장 ----
@@ -952,7 +952,7 @@ function genWorld(){
   // ---- 5. 광산 입구 ----
   for(let x=20;x<=40;x++) setGen(x,1,-24,B.RAIL);
   clueRow(['6/7','+','8/9','='],24,1,-22,1,0);
-  addSlotDevice({pid:9,slot:{x:27,y:1,z:-22},anchor:new THREE.Vector3(26,1,-22),core:true,
+  addSlotDevice({pid:9,slot:{x:28,y:1,z:-22},anchor:new THREE.Vector3(27,1,-22),core:true,
     obj:'광산의 숫자 레일을 복구하세요.',
     fx(){ cartAnim.on=true; toast('광산 수레가 움직입니다!','good'); }});
   // 세로 레일(문제10)
@@ -1002,7 +1002,7 @@ function genWorld(){
     fx(){ toast('10칸 분수판이 완성되었습니다!','good'); }});
   // 식 설계도(문제13)
   clueRow(['3/5','+','5/6','='],6,1,-50,1,0);
-  addSlotDevice({pid:13,slot:{x:9,y:1,z:-50},anchor:new THREE.Vector3(8,1,-50),
+  addSlotDevice({pid:13,slot:{x:10,y:1,z:-50},anchor:new THREE.Vector3(9,1,-50),
     fx(){ toast('설계도가 복구되었습니다!','good'); }});
   // 직사각형 건설판(문제14, 5×4 정확히)
   markRegion(6,-63,10,-60);
