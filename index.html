@@ -573,22 +573,60 @@ defType(B.BED,'침대', pixCanvas('#c0443c',[],g=>{g.fillStyle='#ffffff';g.fillR
 const VALUE_TYPES=new Map(); // label -> typeId
 let nextValueId=100;
 function valueCanvas(label){
+  label=label==null?'':String(label);
   const c=document.createElement('canvas'); c.width=c.height=128;
   const g=c.getContext('2d');
   g.fillStyle='#efe6c8'; g.fillRect(0,0,128,128);
   g.strokeStyle='#8f7a48'; g.lineWidth=8; g.strokeRect(4,4,120,120);
-  g.fillStyle='#2b2b3a'; g.textAlign='center'; g.textBaseline='middle';
-  let lines=[label];
-  if(label.includes('=')&&label.length>7){
-    const i=label.indexOf('=');
-    lines=[label.slice(0,i), label.slice(i)];
+  const textColor='#2b2b3a';
+  function setFont(size){ g.font='bold '+size+'px "Malgun Gothic",sans-serif'; }
+  function fitFont(text,maxWidth,start,min){
+    let f=start;
+    setFont(f);
+    while(f>min && g.measureText(text).width>maxWidth){ f-=2; setFont(f); }
+    return f;
   }
-  let f=56;
-  g.font='bold '+f+'px "Malgun Gothic",sans-serif';
-  const longest=lines.reduce((a,b)=>g.measureText(a).width>g.measureText(b).width?a:b);
-  while(f>10 && g.measureText(longest).width>104){ f-=2; g.font='bold '+f+'px "Malgun Gothic",sans-serif'; }
-  if(lines.length===1) g.fillText(lines[0],64,66);
-  else { g.fillText(lines[0],64,42); g.fillText(lines[1],64,88); }
+  function drawTextFallback(text){
+    g.fillStyle=textColor; g.textAlign='center'; g.textBaseline='middle';
+    let lines=[text];
+    if(text.includes('=')&&text.length>7){
+      const i=text.indexOf('=');
+      lines=[text.slice(0,i), text.slice(i)];
+    }
+    let f=56;
+    setFont(f);
+    const longest=lines.reduce((a,b)=>g.measureText(a).width>g.measureText(b).width?a:b);
+    while(f>10 && g.measureText(longest).width>104){ f-=2; setFont(f); }
+    if(lines.length===1) g.fillText(lines[0],64,66);
+    else { g.fillText(lines[0],64,42); g.fillText(lines[1],64,88); }
+  }
+  function drawFraction(num,den,cx,cy,maxWidth,startSize){
+    g.fillStyle=textColor; g.strokeStyle=textColor; g.lineCap='round';
+    g.textAlign='center'; g.textBaseline='middle';
+    const textMax=Math.max(g.measureText(num).width,g.measureText(den).width);
+    let f=startSize;
+    setFont(f);
+    while(f>18 && Math.max(g.measureText(num).width,g.measureText(den).width)>maxWidth){ f-=2; setFont(f); }
+    const gap=Math.max(19,Math.min(24,f*.5));
+    g.fillText(num,cx,cy-gap);
+    g.lineWidth=5;
+    const lineHalf=Math.max(18,Math.min(maxWidth*.48,Math.max(g.measureText(num).width,g.measureText(den).width)*.58));
+    g.beginPath(); g.moveTo(cx-lineHalf,cy); g.lineTo(cx+lineHalf,cy); g.stroke();
+    g.fillText(den,cx,cy+gap);
+  }
+  function drawMixedNumber(whole,num,den){
+    g.fillStyle=textColor; g.textAlign='center'; g.textBaseline='middle';
+    const wholeSize=fitFont(whole,42,50,24);
+    setFont(wholeSize);
+    g.fillText(whole,35,66);
+    drawFraction(num,den,84,66,62,38);
+  }
+
+  const simple=label.match(/^(\d+)\/(\d+)$/);
+  if(simple){ drawFraction(simple[1],simple[2],64,66,90,44); return c; }
+  const mixed=label.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+  if(mixed){ drawMixedNumber(mixed[1],mixed[2],mixed[3]); return c; }
+  drawTextFallback(label);
   return c;
 }
 function valueType(label){
